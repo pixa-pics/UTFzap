@@ -1,14 +1,17 @@
 {
   "name": "utf-zap",
-  "version": "1.0.2",
-  "description": "Lightweight (8.4kb) compression algorithm that works fast!",
+  "version": "1.1.0",
+  "description": "Lightweight (3.4kb raw, 1.4kb gzipped) compression algorithm that works fast!",
   "devDependencies": {
     "tinyify": "^4.0.0"
   },
   "build": {},
   "scripts": {},
   "author": "Affolter Matias",
-  "keywords": [
+  "keywords": [ 
+    "utfz",
+    "utfz-lib",
+    "utfz2.0",
     "compress",
     "encode",
     "string",

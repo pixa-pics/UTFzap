@@ -4,7 +4,10 @@
 
 DEMO : https://codepen.io/vipertechofficial/pen/LYByVRj
 
-Lightweight (8.4kb) compression algorithm that works fast!
+It is incredibely fast because we generate a bunch of 60 functions to encode small string (0-60 chars) so they are cold function that the browser can optimize easily, also we have a working cache that is increased automatically and which can be reset manually at function call so it savs up memory allocation  usage, more than that, everything is "kind-typed" so we can force the compiler to work with entire number like asm.js does (which is a bridge to compile C/C++ onto JS with speed in mind.and obviously you can pass an object onto which it will work with in order to again, not create memory allocation for nothing!
+
+> Lightweight (3.4kb, and **1.4kb gzipped**) compression algorithm that works *fast*!
+
 
 You can use this peom:
 

@@ -1,3 +1,20 @@
+"use strict";
+/*
+require("core-js/modules/es.array-buffer.slice.js");
+require("core-js/modules/es.typed-array.uint8-array.js");
+require("core-js/modules/es.typed-array.at.js");
+require("core-js/modules/es.typed-array.fill.js");
+require("core-js/modules/esnext.typed-array.find-last.js");
+require("core-js/modules/esnext.typed-array.find-last-index.js");
+require("core-js/modules/es.typed-array.set.js");
+require("core-js/modules/es.typed-array.sort.js");
+require("core-js/modules/esnext.typed-array.to-reversed.js");
+require("core-js/modules/esnext.typed-array.to-sorted.js");
+require("core-js/modules/esnext.typed-array.with.js");
+require("core-js/modules/es.regexp.exec.js");
+require("core-js/modules/es.string.replace.js");
+require("core-js/modules/es.string.replace-all.js");
+*/
 /*
 * The MIT License (MIT)
 *
@@ -21,35 +38,14 @@
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 * SOFTWARE.
 */
-
-/*
-* ORIGINALLY (utfz-lib) IMPLEMENTED BY pouya-eghbali, this library
-* has recieved a boost in configuration, optimization and performance!
-*/
-
-"use strict";
-
-require("core-js/modules/es.array-buffer.slice.js");
-require("core-js/modules/es.typed-array.uint8-array.js");
-require("core-js/modules/es.typed-array.at.js");
-require("core-js/modules/es.typed-array.fill.js");
-require("core-js/modules/esnext.typed-array.find-last.js");
-require("core-js/modules/esnext.typed-array.find-last-index.js");
-require("core-js/modules/es.typed-array.set.js");
-require("core-js/modules/es.typed-array.sort.js");
-require("core-js/modules/esnext.typed-array.to-reversed.js");
-require("core-js/modules/esnext.typed-array.to-sorted.js");
-require("core-js/modules/esnext.typed-array.with.js");
-require("core-js/modules/es.regexp.exec.js");
-require("core-js/modules/es.string.replace.js");
-require("core-js/modules/es.string.replace-all.js");
+/* BASED ON utfz-lib --> https://www.npmjs.com/package/utfz-lib */
 
 var UTFzap = function UTFzap(memory_size, cold_function) {
   if (!(this instanceof UTFzap)) {
     return new UTFzap(memory_size, cold_function);
   }
   this.cm_ = new Uint8Array(memory_size || this.MEMORY_DEFAULT_SIZE);
-  this.fns_ = new Array(cold_function || this.fnsl).fill(null).map(function (v, i) {
+  this.fns_ = Array(cold_function || this.fnsl).fill(null).map(function (v, i) {
     return i >= 3 ? UTFzap.generator(i) : v;
   });
 };
@@ -63,67 +59,30 @@ UTFzap.generator = function () {
     if (i >= chars.length) {
       var timesBigger = Math.floor(i / chars.length);
       var prefix = "_".repeat(timesBigger);
-      var char = chars[i - timesBigger * chars.length];
-      return prefix + char;
+      var _char = chars[i - timesBigger * chars.length];
+      return prefix + _char;
     }
     return chars[i];
   }
   function getChars(i) {
-    return new Array(i).fill().map(function (_, i) {
+    return Array(i).fill().map(function (_, i) {
       return getChar(i);
     });
   }
   function shorten_func(func_str) {
     return func_str.replaceAll("\n", "£").replaceAll("_", "£_").replaceAll(";", ";£").replaceAll("if", "£if").replaceAll("var", "£var£").replaceAll("return", "£return£").replaceAll(" ", "").replaceAll("£", " ");
   }
-  function generate(n, i = 0) {
-    if (n == 2) {
-      return `
-              ${i === 0 ? "var" : ""} ${getChar(i++)} = $b[$o]|0, ${getChar(i)} = 0, ${getChar(i + 1)} = 0, $o=$o+1|0;
-              if (($o|0) > (_$e|0)) {
-                ${getChar(i - 1)} = ${getChar(i - 1)}+_$h|0;
-                return fcc(${getChars(i - 1)});
-              }
-              if ((${getChar(i - 1)}|0) == 0) {
-                return fcc(${getChars(i - 1)}, _$h|0);
-              }
-              ${getChar(i - 1)} = ${getChar(i - 1)}+_$h|0;
-              ${i === 0 ? "var" : ""} ${getChar(i++)} = $b[$o] + _$h|0; $o=$o+1|0;
-              return fcc(${getChars(i)});
-            `;
+  function generate(n, i) {
+    if (i === void 0) {
+      i = 0;
     }
-    return ` 
-            var ${getChar(i)} = $b[$o|0], ${getChar(i + 1)} = 0, ${getChar(i + 2)} = 0; $o=$o+1|0;
-            if (($o|0) > (_$e|0)) {
-              ${getChar(i)} = ${getChar(i)}+_$h|0;
-              return fcc(${getChars(i)});
-            }
-            if ((${getChar(i)}|0) == 0) {
-              _$n = $b[$o|0]|0;$o=$o+1|0;
-              if ((_$n|0) == (_$hC|0)) {
-                ${getChar(i)} = _$h|0;
-              } else {
-                _$hC = _$n|0;
-                _$h = _$n << 8;
-                ${getChar(i)} = $b[$o|0]|0;$o=$o+1|0;
-                if ((${getChar(i)}|0) == 0) {
-                  ${getChar(i)} = _$h|0;
-                  $o=$o+1|0;
-                } else {
-                  ${getChar(i)} = ${getChar(i)}+_$h|0;
-                }
-                if (($o|0) > (_$e|0)) {
-                  return fcc(${getChars(i)});
-                }
-              }
-            } else {
-              ${getChar(i)} = ${getChar(i)}+_$h|0;
-            }
-            ${generate(n - 1, i + 1)}
-          `;
+    if (n == 2) {
+      return "\n              " + (i === 0 ? "var" : "") + " " + getChar(i++) + " = $b[$o]|0, " + getChar(i) + " = 0, " + getChar(i + 1) + " = 0, $o=$o+1|0;\n              if (($o|0) > (_$e|0)) {\n                " + getChar(i - 1) + " = " + getChar(i - 1) + "+_$h|0;\n                return fcc(" + getChars(i - 1) + ");\n              }\n              if ((" + getChar(i - 1) + "|0) == 0) {\n                return fcc(" + getChars(i - 1) + ", _$h|0);\n              }\n              " + getChar(i - 1) + " = " + getChar(i - 1) + "+_$h|0;\n              " + (i === 0 ? "var" : "") + " " + getChar(i++) + " = $b[$o] + _$h|0; $o=$o+1|0;\n              return fcc(" + getChars(i) + ");\n            ";
+    }
+    return " \n            var " + getChar(i) + " = $b[$o|0], " + getChar(i + 1) + " = 0, " + getChar(i + 2) + " = 0; $o=$o+1|0;\n            if (($o|0) > (_$e|0)) {\n              " + getChar(i) + " = " + getChar(i) + "+_$h|0;\n              return fcc(" + getChars(i) + ");\n            }\n            if ((" + getChar(i) + "|0) == 0) {\n              _$n = $b[$o|0]|0;$o=$o+1|0;\n              if ((_$n|0) == (_$hC|0)) {\n                " + getChar(i) + " = _$h|0;\n              } else {\n                _$hC = _$n|0;\n                _$h = _$n << 8;\n                " + getChar(i) + " = $b[$o|0]|0;$o=$o+1|0;\n                if ((" + getChar(i) + "|0) == 0) {\n                  " + getChar(i) + " = _$h|0;\n                  $o=$o+1|0;\n                } else {\n                  " + getChar(i) + " = " + getChar(i) + "+_$h|0;\n                }\n                if (($o|0) > (_$e|0)) {\n                  return fcc(" + getChars(i) + ");\n                }\n              }\n            } else {\n              " + getChar(i) + " = " + getChar(i) + "+_$h|0;\n            }\n            " + generate(n - 1, i + 1) + "\n          ";
   }
   return function (n) {
-    return new Function("$b", "$l", "$o", shorten_func(`"use strict"; var fcc = String.fromCharCode, _$hC = 0, _$h = 0, _$n = 0, _$e = $o + $l | 0; ${generate(n)}`));
+    return new Function("$b", "$l", "$o", shorten_func("\"use strict\"; var fcc = String.fromCharCode, _$hC = 0, _$h = 0, _$n = 0, _$e = $o + $l | 0; " + generate(n)));
   };
 }();
 Object.defineProperty(UTFzap.prototype, 'reset', {
