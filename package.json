@@ -1,6 +1,6 @@
 {
   "name": "utf-zap",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Lightweight (8.4kb) compression algorithm that works fast!",
   "devDependencies": {
     "tinyify": "^4.0.0"

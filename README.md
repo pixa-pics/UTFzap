@@ -1,8 +1,18 @@
-# UTFzap --> UTF-16 ~50% Lighter and Faster!
+# UTFzap --> UTF-16 ~5-50% Lighter and Faster!
 
 ![Branding of UTFzap](https://raw.githubusercontent.com/pixa-pics/UTFzap/main/Branding.png)
 
 DEMO : https://codepen.io/vipertechofficial/pen/LYByVRj
+
+Lightweight (8.4kb) compression algorithm that works fast!
+
+You can use this peom:
+
+> Աեցեհի իմ լավ ?ւղիե լավարար,
+> Կյաեբս չտայի կասկածի մհգիե...
+> Այեպհս կ?ւզհի մհկե իեծ ?ավատր,
+> Այեպհս կ?ւզհի ?ավատալ մհկիե։
+
 
 ## How to use it?
 
@@ -54,7 +64,7 @@ These are wasted bytes. The letters of each language, are incrementally one
 after another and share the same high byte most of the time. Utfz assumes
 the high byte is equal to `00` and changes it every time it encounters a `00`.
 
-With utfz, the first word becomes:
+With utfzap, the first word becomes:
 
 ```
 48 65 6c 6c 6f
@@ -73,7 +83,7 @@ different languages with different high bytes can be combined:
 48 65 6c 6c 6f 00 06 33 44 27 45
 ```
 
-To escape a low byte that equals `00`, utfz adds the current high byte after
+To escape a low byte that equals `00`, utfzap adds the current high byte after
 the low byte in the sequence.
 
 Check the source code for more info.
