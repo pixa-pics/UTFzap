@@ -1,0 +1,37 @@
+{
+  "name": "utf-zap",
+  "version": "1.0.0",
+  "description": "Lightweight (8.4kb) compression algorithm that works fast!",
+  "devDependencies": {
+    "tinyify": "^4.0.0"
+  },
+  "build": {},
+  "scripts": {},
+  "author": "Affolter Matias",
+  "keywords": [
+    "compress",
+    "encode",
+    "string",
+    "buffer",
+    "parse",
+    "array",
+    "decompress",
+    "compress string",
+    "decompress string",
+    "UTF8",
+    "UTF-8",
+    "UTF16",
+    "UTF-16le"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pixa-pics/UTFzap.git"
+  },
+  "engines": {
+    "node": ">=0.8.0"
+  },
+  "dependencies": {
+    "core-js": "^3.27.1"
+  }
+}
