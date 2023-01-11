@@ -5,6 +5,11 @@
 ## How to use it?
 
 ```JavaScript
+
+
+import UTFzap from "utf-zap"; // In node.js
+/* OR */
+var UTFzap = window.UTFzap; // Use the minified version for browser (> safari 10 & > Chrome 51)
 var utfzap = new UTFzap(); // memory_size (default: 256*8), cold_function (default: 66)
 
 var string = "Hello my friend, welcome to city utfzap, سلام"
