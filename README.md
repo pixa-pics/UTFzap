@@ -1,6 +1,8 @@
-# UTFzap --> UTF-16 Lighter and Faster!
+# UTFzap --> UTF-16 ~50% Lighter and Faster!
 
 ![Branding of UTFzap](https://raw.githubusercontent.com/pixa-pics/UTFzap/main/Branding.png)
+
+DEMO : https://codepen.io/vipertechofficial/pen/LYByVRj
 
 ## How to use it?
 
