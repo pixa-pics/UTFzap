@@ -1,5 +1,5 @@
 "use strict";
-/*
+
 require("core-js/modules/es.array-buffer.slice.js");
 require("core-js/modules/es.typed-array.uint8-array.js");
 require("core-js/modules/es.typed-array.at.js");
@@ -13,7 +13,8 @@ require("core-js/modules/esnext.typed-array.to-sorted.js");
 require("core-js/modules/esnext.typed-array.with.js");
 require("core-js/modules/es.regexp.exec.js");
 require("core-js/modules/es.string.replace.js");
-require("core-js/modules/es.string.replace-all.js");*/
+require("core-js/modules/es.string.replace-all.js");
+
 
 /*
 * The MIT License (MIT)
@@ -46,111 +47,197 @@ var UTFzap = function UTFzap(memory_size, cold_function) {
         return new UTFzap(memory_size, cold_function);
     }
 
-    this.cm_ = new Uint8Array(memory_size || this.MEMORY_DEFAULT_SIZE);
-    this.fns_ = new Array(cold_function || this.fnsl).fill(null).map(function (v, i){ return (i >= 3 ? UTFzap.generator(i) : v); });
+    this.reusable_memory_ = new Uint16Array((memory_size & 0xFFFFFF) || this.MEMORY_DEFAULT_SIZE);
+    this.cold_functions_length_ = (cold_function & 0xFF) || this.fnsl;
+    
+    // Expand cold function cache
+    if(this.cold_functions_length_ > UTFzap.coldFunctionsCache.length) {
+        while(UTFzap.coldFunctionsCache.length < this.cold_functions_length_){
+            UTFzap.coldFunctionsCache.push(UTFzap.generator(UTFzap.coldFunctionsCache.length));
+        }
+    }
+    
+    this.cold_functions_ = UTFzap.coldFunctionsCache;
+    this.fcc_ = UTFzap.fcc;
+    this.fcca_ = UTFzap.fcca;
 };
 
-UTFzap.prototype.MEMORY_CHUNCK_SIZE = 256;
-UTFzap.prototype.MEMORY_DEFAULT_SIZE = 256 * 8;
-UTFzap.prototype.fcc = String.fromCharCode;
-UTFzap.prototype.fnsl = 66;
+UTFzap.fcc = function(n) {return String.fromCharCode(n|0)};
+UTFzap.fcca = function(a) {return String.fromCharCode.apply(null,a)};
 
 UTFzap.generator = (function (){
-    var chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
     function getChar(i) {
-        if (i >= chars.length) {
-            var timesBigger = Math.floor(i / chars.length);
-            var prefix = "_".repeat(timesBigger);
-            var char = chars[i - timesBigger * chars.length];
-            return prefix + char;
-        }
-        return chars[i];
+        return "$x"+Math.abs(i).toString(32);
     }
 
     function getChars(i) {
-        return new Array(i).fill().map(function (_, i){ return getChar(i); });
+        return new Array(i).fill(null).map(function (_, i){ return getChar(i)});
     }
 
     function shorten_func(func_str) {
-        return func_str
-            .replaceAll("\n", "£").replaceAll("_", "£_").replaceAll(";", ";£").replaceAll("if", "£if").replaceAll("var", "£var£").replaceAll("return", "£return£")
-            .replaceAll(" ", "")
-            .replaceAll("£", " ")
+        return func_str.split(" ").filter(function (word){return word !== "" && word !== " ";}).join(" ");
     }
 
     function generate(n, i = 0) {
         if (n == 2) {
             return `
-              ${i===0?"var":""} ${getChar(i++)} = $b[$o]|0, ${getChar(i)} = 0, ${getChar(i+1)} = 0, $o=$o+1|0;
-              if (($o|0) > (_$e|0)) {
-                ${getChar(i - 1)} = ${getChar(i - 1)}+_$h|0;
-                return fcc(${getChars(i - 1)});
+              let ${getChar(i++)} = buf[offset++];
+              if (offset > end) {
+                ${getChar(i - 1)} += high;
+                return String.fromCharCode(${getChars(i - 1)});
               }
-              if ((${getChar(i - 1)}|0) == 0) {
-                return fcc(${getChars(i - 1)}, _$h|0);
+              if (${getChar(i - 1)} === 0) {
+                return String.fromCharCode(${getChars(i - 1)}, high);
               }
-              ${getChar(i - 1)} = ${getChar(i - 1)}+_$h|0;
-              ${i===0?"var":""} ${getChar(i++)} = $b[$o] + _$h|0; $o=$o+1|0;
-              return fcc(${getChars(i)});
+              ${getChar(i - 1)} += high;
+              let ${getChar(i++)} = buf[offset++] + high;
+              return String.fromCharCode(${getChars(i)});
             `;
+        }else {
 
-        }
-        return ` 
-            var ${getChar(i)} = $b[$o|0], ${getChar(i+1)} = 0, ${getChar(i+2)} = 0; $o=$o+1|0;
-            if (($o|0) > (_$e|0)) {
-              ${getChar(i)} = ${getChar(i)}+_$h|0;
-              return fcc(${getChars(i)});
+            return `
+            let ${getChar(i)} = buf[offset++];
+            if (offset > end) {
+              ${getChar(i)} += high;
+              return String.fromCharCode(${getChars(i)});
             }
-            if ((${getChar(i)}|0) == 0) {
-              _$n = $b[$o|0]|0;$o=$o+1|0;
-              if ((_$n|0) == (_$hC|0)) {
-                ${getChar(i)} = _$h|0;
+            if (${getChar(i)} === 0) {
+              next = buf[offset++];
+              if (next === highCode) {
+                ${getChar(i)} = high;
               } else {
-                _$hC = _$n|0;
-                _$h = _$n << 8;
-                ${getChar(i)} = $b[$o|0]|0;$o=$o+1|0;
-                if ((${getChar(i)}|0) == 0) {
-                  ${getChar(i)} = _$h|0;
-                  $o=$o+1|0;
+                highCode = next;
+                high = next << 8;
+                ${getChar(i)} = buf[offset++];
+                if (${getChar(i)} === 0) {
+                  ${getChar(i)} = high;
+                  offset++
                 } else {
-                  ${getChar(i)} = ${getChar(i)}+_$h|0;
+                  ${getChar(i)} += high;
                 }
-                if (($o|0) > (_$e|0)) {
-                  return fcc(${getChars(i)});
+                if (offset > end) {
+                  return String.fromCharCode(${getChars(i)});
                 }
               }
             } else {
-              ${getChar(i)} = ${getChar(i)}+_$h|0;
+              ${getChar(i)} += high;
             }
             ${generate(n - 1, i + 1)}
           `;
+        }
     }
 
     return function(n) {
-        return new Function("$b", "$l", "$o", shorten_func(`"use strict"; var fcc = String.fromCharCode, _$hC = 0, _$h = 0, _$n = 0, _$e = $o + $l | 0; ${generate(n)}`));
+        var main = generate(n);
+        var body = shorten_func(`var highCode = 0; var high = 0; var next; end = offset + length; ${main}`);
+        return new Function("buf", "length", "offset", body);
     };
 })();
 
+UTFzap.coldFunctionsCache = [];
+UTFzap.lazyComputeColdFunctions = function (batch_size, batch_number) {
+
+    batch_size = batch_size || 8;
+    batch_number = batch_number || 16;
+    var start_generate = 3;
+    var store = UTFzap.coldFunctionsCache;
+    var generator = UTFzap.generator;
+    var tasks = [];
+    var sum = 0;
+    var stacked = 0;
+    var handle = null;
+
+    requestIdleCallback = requestIdleCallback || function (handler) {
+        var start = Date.now();
+        return setTimeout(function (start, handler) {
+            handler({
+                didTimeout: false,
+                timeRemaining: function () {return Math.max(0, 50.0 - (Date.now() - start));}
+            });
+        }, 1, start, handler);
+    };
+
+    cancelIdleCallback = cancelIdleCallback || function(id)  {clearTimeout(id);};
+
+    function enqueueTask(handler, data) {
+        tasks.push({handler: handler, data: data,});
+        sum++;
+        if (!handle) {
+            handle = requestIdleCallback(runTaskQueue, { timeout: 1000 });
+        }
+    }
+
+    function runTaskQueue(deadline) {
+        while ((deadline.timeRemaining() > 0 || deadline.didTimeout) && tasks.length) {
+            var task = tasks.shift();
+            stacked++;
+            task.handler(task.data);
+        }
+
+        if (tasks.length) {
+            handle = requestIdleCallback(runTaskQueue, { timeout: 1000 });
+        } else {
+            handle = 0;
+        }
+    }
+
+    function getColdFunctions(parameters) {
+        parameters.callback(
+            new Array(parameters.to-parameters.from).fill(parameters.from).map(function (start, offset){
+                return parameters.generator(start+offset);
+            }), store);
+    }
+
+    function addColdFunctions(functions, store){
+        functions.forEach(function(f){
+            store.push(f);
+        });
+    }
+
+    function decodeTechnoStuff(batch_size, batch_number, addColdFunctions, store, generator, getColdFunctions, enqueueTask) {
+
+        for (var i = 0; i < batch_number; i++) {
+            var data = {
+                callback: addColdFunctions,
+                store: store,
+                generator: generator,
+                from: start_generate+i*batch_size,
+                to: (i+1)*batch_size+start_generate
+            };
+            enqueueTask(getColdFunctions, data);
+        }
+    }
+    for(var i = 0; i < start_generate; i++) {
+        store.push(null);
+    }
+    decodeTechnoStuff(batch_size, batch_number, addColdFunctions, store, generator, getColdFunctions, enqueueTask);
+};
+
+UTFzap.prototype.MEMORY_CHUNCK_SIZE = 256;
+UTFzap.prototype.MEMORY_DEFAULT_SIZE = 256 * 8;
+UTFzap.prototype.fnsl = 128;
+
 Object.defineProperty(UTFzap.prototype, 'reset', {
     get: function get() {
-        return function (memory_size){ this.cm_ = new Uint8Array(memory_size || this.MEMORY_DEFAULT_SIZE); }
+        return function (memory_size){ this.reusable_memory_ = new Uint16Array(memory_size || this.MEMORY_DEFAULT_SIZE); }
     }
 });
 
 Object.defineProperty(UTFzap.prototype, 'pack', {
     get: function get() {
-        return function(str, length, buf, offset) {
-            const start = offset;
-            let currHigh = 0;
-            for (let i = 0; i < length; i++) {
-                const code = str.charCodeAt(i);
-                const high = code >> 8;
+        return function (str, length, buf, offset) {
+            var start = offset;
+            var currHigh = 0;
+            for (var i = 0; i < length; i++) {
+                var code = str.charCodeAt(i);
+                var high = code >> 8;
                 if (high !== currHigh) {
                     buf[i + offset++] = 0;
                     buf[i + offset++] = high;
                     currHigh = high;
                 }
-                const low = code & 0xff;
+                var low = code & 0xff;
                 buf[i + offset] = low;
                 if (!low) {
                     buf[i + ++offset] = currHigh;
@@ -164,40 +251,48 @@ Object.defineProperty(UTFzap.prototype, 'pack', {
 Object.defineProperty(UTFzap.prototype, 'unpack', {
     get: function get() {
         return function(buf, length, offset) {
-
             if (length === 0) {
                 return "";
             } else if (length === 1) {
-                return this.fcc(buf[offset]);
+                return this.fcc_(buf[offset]);
             } else if (length === 2) {
-                const a = buf[offset++];
+                var a = buf[offset++];
                 if (a === 0) {
                     return "\0";
                 }
-                return  this.fcc(a, buf[offset]);
-            } else if (length <= 65) {
-                return this.f[length](buf, length, offset);
+                return this.fcc_(a, buf[offset]);
+            } else if (length < this.cold_functions_length_) {
+                return this.cold_functions_[length](buf, length, offset);
             }
-            const end = offset + length;
-            let currHighCode = 0;
-            let currHigh = 0;
-            const codes = [];
-            for (let i = offset; i < end; i++) {
-                const curr = buf[i];
+            var end = offset + length;
+            var currHighCode = 0;
+            var currHigh = 0;
+            var codes_index = 0;
+            var codes_number = end-offset;
+
+            if(codes_number > this.reusable_memory_.length){
+                this.reusable_memory_ = new Uint16Array(codes_number*1.5|0);
+            }
+
+            for (var i = offset; i < end; i++) {
+                var curr = buf[i];
                 if (curr) {
-                    codes.push(curr + currHigh);
+                    this.reusable_memory_[codes_index] = curr + currHigh & 0xFFFF;
+                    codes_index++;
                 } else {
-                    const next = buf[i + 1];
+                    var next = buf[i + 1];
                     i += 1;
                     if (next === currHighCode) {
-                        codes.push(curr + currHigh);
+                        this.reusable_memory_[codes_index] = curr + currHigh & 0xFFFF;
+                        codes_index++;
                     } else {
                         currHighCode = next;
                         currHigh = next << 8;
                     }
                 }
             }
-            return this.fcc.apply(null, codes);
+
+            return this.fcca_(this.reusable_memory_.subarray(0, codes_index));
         };
     }
 });
@@ -226,6 +321,8 @@ Object.defineProperty(UTFzap.prototype, 'decode', {
 
 window.UTFzap = UTFzap;
 
-if(module) {
+UTFzap.lazyComputeColdFunctions();
+
+if(typeof module !== "undefined") {
     module.exports = UTFzap;
 }

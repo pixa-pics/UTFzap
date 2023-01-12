@@ -1,12 +1,12 @@
-# UTFzap --> UTF-16 up to half lighter and 100-175% Faster!
+# UTFzap --> UTF-16 from -9% up to half weight and about the same-175% faster than ut8!
 
 ![Branding of UTFzap](https://raw.githubusercontent.com/pixa-pics/UTFzap/main/Branding.png)
 
 DEMO : https://codepen.io/vipertechofficial/pen/LYByVRj
 
-It is incredibely fast because we generate a bunch of 60 functions to encode small string (0-60 chars) so they are cold function that the browser can optimize easily, also we have a working cache that is increased automatically and which can be reset manually at function call so it savs up memory allocation  usage, more than that, everything is "kind-typed" so we can force the compiler to work with entire number like asm.js does (which is a bridge to compile C/C++ onto JS with speed in mind.and obviously you can pass an object onto which it will work with in order to again, not create memory allocation for nothing!
+It is incredibely fast because we generate a bunch of 96 functions to encode small string (0-60 chars) so they are cold function that the browser can optimize easily, also we have a working cache that is increased automatically and which can be reset manually at function call so it savs up memory allocation  usage, more than that, everything is "kind-typed" so we can force the compiler to work with entire number like asm.js does (which is a bridge to compile C/C++ onto JS with speed in mind.and obviously you can pass an object onto which it will work with in order to again, not create memory allocation for nothing!
 
-> Lightweight (3.4kb, and **1.4kb gzipped**) compression algorithm that works *fast*!
+> Lightweight (3.4+kb, and **1.4kb gzipped**) compression algorithm that works *fast*!
 
 You can use this peom:
 
@@ -17,12 +17,13 @@ You can use this peom:
 
 ## Technical details
 
- * Initialization takes ~100ms, so you might need to anticipate it
+ * Initialization takes ~100ms, but once the library is laoded inside the browsers, it will innitialize only once and once for all delaying this action at available computation power later or at now if the instance is created immeiatly at importation, if you set cold functions to be higher than 128 which isn't recommanded, you'll have to wait a little longer, itdoens't cache that far cold functions
+ at you might need to anticipate it
  * It allocate an unsigned integer typed array of 256*8 bits by default
  * You can reset memory length but it adjust to higher bounces automatically
  * It generate for string length 0-60, "cold functions" from string that gets optimized by the browser automatically as they behave predictably
  * Code is written in ASM.JS style so number are typed to entire number and number comparaison too
- * It only weights as low as 3.4Kb, and only uses `Uint8Array` class as something special
+ * It only weights as low asa bit more than  3.4Kb, and only uses `Uint8Array` class as something special
  * You can saves up to half the size of byte length and encode/decode as much as a speed of 175% the `TextEncoder` object instance
  
  So to sum up, we reuse memory object, we generate cold functions for small strings, and we force the compiler to use entire integer for processing speed! Very smart and that a lot due to pouya-eghbali, so thanks to him.
@@ -54,7 +55,7 @@ utfzap.reset() // memory_size (default: 256*8)
 ```
 
 
-UTFzap is a small utf16 compression library.
+UTFzap is a small utf16 compression library it produce text as lightweight as utf-8 but works much faster.
 
 ## How does it work?
 
