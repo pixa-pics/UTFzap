@@ -1,7 +1,7 @@
 {
   "name": "utf-zap",
-  "version": "1.1.1",
-  "description": "Lightweight (3.4kb raw, 1.4kb gzipped) 50% efficient UTF-16 compression algorithm that works 175% faster!",
+  "version": "1.2.0",
+  "description": "Lightweight (3.4kb raw, 1.4kb gzipped) UTF-16 compression algorithm that works 175% faster than UTF-8 yet outputs the same size!",
   "devDependencies": {
     "tinyify": "^4.0.0"
   },

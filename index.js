@@ -13,8 +13,7 @@ require("core-js/modules/esnext.typed-array.to-sorted.js");
 require("core-js/modules/esnext.typed-array.with.js");
 require("core-js/modules/es.regexp.exec.js");
 require("core-js/modules/es.string.replace.js");
-require("core-js/modules/es.string.replace-all.js");
-*/
+require("core-js/modules/es.string.replace-all.js");*/
 
 /*
 * The MIT License (MIT)
@@ -140,79 +139,65 @@ Object.defineProperty(UTFzap.prototype, 'reset', {
 
 Object.defineProperty(UTFzap.prototype, 'pack', {
     get: function get() {
-        return function($str, $z, $b, $o) {
-            $str = ""+$str;
-            $o = $o|0;
-            $z = $z+$o|0;
-            var $s = $o|0, $i = $s|0, $c = 0, _$h = 0, $l = 0, $cH = 0;
-            for (;($i|0) < ($z|0); $i=$i+1|0) {
-                $c = $str.charCodeAt($i|0)|0;
-                _$h = $c >> 8;
-                if ((_$h|0) != ($cH|0)) {
-                    $b[$i + $o|0] = 0;
-                    $b[$i + $o+1|0] = (_$h|0)|0;
-                    $o = $o+2|0;
-                    $cH = _$h|0;
+        return function(str, length, buf, offset) {
+            const start = offset;
+            let currHigh = 0;
+            for (let i = 0; i < length; i++) {
+                const code = str.charCodeAt(i);
+                const high = code >> 8;
+                if (high !== currHigh) {
+                    buf[i + offset++] = 0;
+                    buf[i + offset++] = high;
+                    currHigh = high;
                 }
-                $l = $c & 0xFF;
-                $b[$i + $o|0] = ($l|0)|0;
-                if (($l|0)==0) {
-                    $o = $o+1|0;
-                    $b[$i + $o|0] = $cH|0;
+                const low = code & 0xff;
+                buf[i + offset] = low;
+                if (!low) {
+                    buf[i + ++offset] = currHigh;
                 }
             }
-            return $i-$s|0;
+            return length + offset - start;
         }
     }
 });
 
 Object.defineProperty(UTFzap.prototype, 'unpack', {
     get: function get() {
-        return function($b, $l, $o) {
+        return function(buf, length, offset) {
 
-            $l = $l | 0;
-            $o = $o | 0;
-
-            if (($l|0) == 0) {
+            if (length === 0) {
                 return "";
-            } else if (($l|0) == 1) {
-                return this.fcc($b[$o|0]|0);
-            } else if (($l|0) == 2) {
-                var _$a = $b[$o|0]|0;$o=$o+1|0;
-                if ((_$a|0) == 0) {
+            } else if (length === 1) {
+                return this.fcc(buf[offset]);
+            } else if (length === 2) {
+                const a = buf[offset++];
+                if (a === 0) {
                     return "\0";
                 }
-                return this.fcc(_$a|0, $b[$o|0]|0);
-            } else if (($l|0) < this.fnsl) {
-                return this.fns_[$l|0]($b, $l|0, $o|0);
+                return  this.fcc(a, buf[offset]);
+            } else if (length <= 65) {
+                return this.f[length](buf, length, offset);
             }
-
-            var _$e = $o + $l | 0, _$chC = 0, _$ch = 0,_$i = $o|0, _$x = 0, _$n = 0, _$cmi = 0, _$str = "";
-
-            if((this.cm_.length|0) < ($l*2|0)){
-                this.cm_ = new Uint8Array($l*2|0);
-            }
-
-            for (;(_$i|0) < (_$e|0);_$i=_$i+1|0) {
-                _$x = $b[_$i|0]|0;
-                if (_$x) {
-                    this.cm_[_$cmi|0] = _$x + _$ch | 0; _$cmi = _$cmi+1|0;
+            const end = offset + length;
+            let currHighCode = 0;
+            let currHigh = 0;
+            const codes = [];
+            for (let i = offset; i < end; i++) {
+                const curr = buf[i];
+                if (curr) {
+                    codes.push(curr + currHigh);
                 } else {
-                    _$n = $b[_$i + 1|0];
-                    _$i += 1;
-                    if ((_$n|0) == (_$chC|0)) {
-                        this.cm_[_$cmi|0] = _$x + _$ch | 0; _$cmi = _$cmi+1|0;
+                    const next = buf[i + 1];
+                    i += 1;
+                    if (next === currHighCode) {
+                        codes.push(curr + currHigh);
                     } else {
-                        _$chC = _$n|0;
-                        _$ch = _$n << 8;
+                        currHighCode = next;
+                        currHigh = next << 8;
                     }
                 }
             }
-
-            for(_$i = 0; (_$i|0) < (_$cmi|0); _$i = _$i + this.MEMORY_CHUNCK_SIZE|0){
-                _$str = _$str + this.fcc.apply(null, this.cm_.subarray(_$i|0, Math.min(_$cmi|0, _$i+this.MEMORY_CHUNCK_SIZE)));
-            }
-            return _$str;
+            return this.fcc.apply(null, codes);
         };
     }
 });
@@ -221,8 +206,8 @@ Object.defineProperty(UTFzap.prototype, 'unpack', {
 Object.defineProperty(UTFzap.prototype, 'encode', {
     get: function get() {
         return function ($str) {
-            var $b = new Uint8Array($str.length*2+2);
-            var $l = this.pack($str, $str.length, $b, 0);
+            var $b = new Uint8Array($str.length*3+2);
+            var $l = this.pack($str, $str.length, $b, 2);
             $b[0] = ($l >> 0) & 0xff;
             $b[1] = ($l >> 8) & 0xff;
             return $b.slice(0, $l+2);
@@ -234,7 +219,7 @@ Object.defineProperty(UTFzap.prototype, 'decode', {
     get: function get() {
         return function ($b) {
             var $l = 0 | $b[0] << 0 | $b[1] << 8;
-            return this.unpack($b, $l, 2);
+            return this.unpack($b, $l+2, 2);
         }
     }
 });
