@@ -1,4 +1,4 @@
-# UTFzap --> UTF-16 ~5-50% Lighter and Faster!
+# UTFzap --> UTF-16 up to half lighter and 100-175% Faster!
 
 ![Branding of UTFzap](https://raw.githubusercontent.com/pixa-pics/UTFzap/main/Branding.png)
 
@@ -8,7 +8,6 @@ It is incredibely fast because we generate a bunch of 60 functions to encode sma
 
 > Lightweight (3.4kb, and **1.4kb gzipped**) compression algorithm that works *fast*!
 
-
 You can use this peom:
 
 > Աեցեհի իմ լավ ?ւղիե լավարար,
@@ -16,6 +15,17 @@ You can use this peom:
 > Այեպհս կ?ւզհի մհկե իեծ ?ավատր,
 > Այեպհս կ?ւզհի ?ավատալ մհկիե։
 
+## Technical details
+
+ * Initialization takes ~100ms, so you might need to anticipate it
+ * It allocate an unsigned integer typed array of 256*8 bits by default
+ * You can reset memory length but it adjust to higher bounces automatically
+ * It generate for string length 0-60, "cold functions" from string that gets optimized by the browser automatically as they behave predictably
+ * Code is written in ASM.JS style so number are typed to entire number and number comparaison too
+ * It only weights as low as 3.4Kb, and only uses `Uint8Array` class as something special
+ * You can saves up to half the size of byte length and encode/decode as much as a speed of 175% the `TextEncoder` object instance
+ 
+ So to sum up, we reuse memory object, we generate cold functions for small strings, and we force the compiler to use entire integer for processing speed! Very smart and that a lot due to pouya-eghbali, so thanks to him.
 
 ## How to use it?
 
@@ -94,3 +104,4 @@ Check the source code for more info.
 ---
 
 Forked from UTFZ-lib
+
