@@ -1,21 +1,32 @@
-# UTFzap, Intelligent UTF-16 almost 48% faster and 9% lighter compared to the native UTF-8 browser serializer!
+# UTFzap :zap: Intelligent UTF-16 almost 75% faster and 9% lighter compared to the native UTF-8 browser serializer!
+
 ![MIT](https://img.shields.io/badge/license-MIT-green)
 ![Branding of UTFzap](https://raw.githubusercontent.com/pixa-pics/UTFzap/main/Branding.png) ![npm](https://img.shields.io/npm/dw/utf-zap?label=NPM%20DOWNLOAD&logo=NPM)
 
-DEMO : [Go to codepen.io](https://codepen.io/vipertechofficial/pen/LYByVRj)
+DEMO : [Go to codepen.io](https://codepen.io/vipertechofficial/pen/LYByVRj) :sparkles:
 
 This library is incredibely fast because we generate a bunch of ~61 functions to encode small string (3-64 chars, up to 255) but it can be parameterized, they are cold function in the sense that the browser can optimize them easily as they are quite static, also we have a working cache of those function, shared and accross all new instance that needs a higher number that the one in cache, that is increased automatically, and which can be reset manually the reusable memory that serves as a temporary working object for each instance, it savs up memory allocation and usage, more than that, everything wihin this module is made to force the JIT compiler to work with entire number like the asm.js project does and obviously you can pass a buffer from elsewhere it can writte onto it without copies, which it will work with in order to again, not create memory allocation for nothing!
 
-```diff 
-+ npm install utf-zap // And you get that piece of text-technology
-```
+## Install :package:
+
 > Download it from NPM easily, use /raw or /browser to get other kind of JS bundles once it has been installed inside your project
 
-**#1 Lightweight** (5.5 kB), it only use a 1 Byte Typed Array and some String class functions. It is a compression algorithm that works **fast**, we can **#2 encode and decode at 148% the speed** of the universal UTF-8 `TextEncoder/TextDecoder` tool which by the way doesn't support officialy (not at all) encoding/decoding UTF-16, this native implementation rather provides UTF-8 useful and that's it! Here we also made that it is not only +48% faster but also we **#3 reduce the BytesArray by 9%** which can be summed up with the gain of speed to gives an appropriate view of the given advantages...
+**Run :**
+
+
+```diff 
++ npm install utf-zap
+```
+
+And you get that piece of technology for texts!
+
+## Information :mag:
+
+**#1 Lightweight** (6.8 kB), it only use a 1-2 Byte Typed Array and some String class functions. It is a compression algorithm that works **fast**, we can **#2 encode and decode at somhow a bit more than 150% the speed** of the universal UTF-8 `TextEncoder/TextDecoder` tool which by the way doesn't support officialy (not at all) encoding/decoding UTF-16, this native implementation rather provides UTF-8 useful and that's it! Here we also made that it is not only +75% faster but also we **#3 reduce the BytesArray by 9%** which can be summed up with the gain of speed to gives an appropriate view of the given advantages...
 
 Let's use the online demo on [CodePen](https://codepen.io/vipertechofficial/pen/LYByVRj), you can see that it works perfectly like the native browser utility except it has a different byte encoding, here we unfortunately doesn't saves memory usage, but it might be a revenge to come soon.
 
-**You can use or try with this peom:**
+**You can use or try with this peom:** :memo:
 
 <span dir="rtl" class="rtl"><h3>
 کوهستان اندامت شعر غریبی‌ست</h3><div>
@@ -28,7 +39,7 @@ You'll notice that the bytes aren't the same!
 
 ---
 
-## Technical details
+## Technical details :construction:
 
 To sum up, we reuse memory object, we generate cold functions for small strings, and we force the compiler to use entire integer for processing speed! Very smart and that a lot due to pouya-eghbali idea that this module exists, so thanks to himself.
 
@@ -67,7 +78,7 @@ UU:::::U     U:::::UUT:::::TT:::::::TT:::::TFF::::::FFFFFFFFF::::F
  * It only weights as low asa bit more than 5Kb, and only uses the `Uint8Array` class as something special, there is no dependency except in the browserified version which weights 30 kB in average, which can be usefull for retrocompatibility.
  * You can saves up to half the size of byte length compared to the true UTF-16le or UTF16be encoding and as much as a speed of 175% the `TextEncoder` object instance, simply insane!
 
-## How to use it?
+## How to use it? :wrench:
 
 ```JavaScript
 
@@ -96,7 +107,7 @@ utfzap.reset() // memory_size (default: 256*8)
 
 ---
 
-## How does it works? 
+## How does it works? :hammer:
 
 Is this like a text-unicorne for unicode, that means something totally mythological as opposd to coputer science? UTFzap is a small compression library it produce text as lightweight as utf-8 yet it works much faster, it simply describe the "level" encoded on every impared bytes that regards a set of chaacters on the beginning of the serie using 0x00 as an identifier for changing the current "level" description... something more precise is shown below. 
 

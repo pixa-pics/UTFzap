@@ -33,7 +33,7 @@ var UTFzap = function UTFzap(memory_size, cold_function) {
 
     this.reusable_memory_ = new Uint16Array((memory_size & 0xFFFFFF) || this.MEMORY_DEFAULT_SIZE); // Cache max size is 2^12
     this.cold_functions_length_ = (cold_function & 0xFF) || this.fnsl;  // Cold function max length is 2^8
-    
+
     // Expand cold function cache for all instance of this class
     // Cold function which will be later pushed on to future instance too
     if(this.cold_functions_length_ > UTFzap.coldFunctionsCache.length) {
@@ -118,7 +118,7 @@ UTFzap.generator = (function (){
 
     return function(n) {
         var main = generate(n);
-        var body = shorten_func(`var ${getVarChars(n)} = 0, highCode = 0, high = 0, next; end = (offset + length|0) ${main}`); // $t -> 0: HighCode. 1: high, 2: next, 3: end, 4: offset, 5: length
+        var body = shorten_func(`var ${getVarChars(n)} = 0, highCode = 0, high = 0, next; end = offset + length|0; ${main}`); // $t -> 0: HighCode. 1: high, 2: next, 3: end, 4: offset, 5: length
         return new Function("buf", "length", "offset", body);
     };
 })();
@@ -258,6 +258,11 @@ Object.defineProperty(UTFzap.prototype, 'set_memory_item', {
     get: function get() { return function (index, value){index=index|0; value=value|0; this.reusable_memory_[index|0] = value|0; }}
 });
 
+// Write an array of numbers that should be from 0-65535 in memory
+Object.defineProperty(UTFzap.prototype, 'set_memory_items', {
+    get: function get() { return function (index, value){index=index|0; this.reusable_memory_.set(value, index|0); return value.length|0; }}
+});
+
 // Read a number that should is from 0-65535 in memory
 Object.defineProperty(UTFzap.prototype, 'get_memory_item', {
     get: function get() { return function (index){index=index|0; return this.reusable_memory_[index|0]|0; }}
@@ -269,21 +274,21 @@ UTFzap.prototype.pack = function (str, length, buf, offset) {
     length = length | 0;
     offset = offset | 0;
     var start = offset|0, currHigh = 0, code = 0, high = 0, low = 0, i = 0;
-    for (i = 0; (i|0) < (length|0); i=i+1|0) {
-        code = str.charCodeAt(i);
+    for (; (i|0) < (length|0); i=(i+1|0)>>>0) {
+        code = (str.charCodeAt(i)|0)>>>0;
         high = code >> 8;
         if ((high|0) != (currHigh|0)) {
             buf[i + offset++] = 0;
-            buf[i + offset++] = high|0;
-            currHigh = high|0;
+            buf[i + offset++] = (high|0)>>>0;
+            currHigh = (high|0)>>>0;
         }
-        low = code & 0xff;
-        buf[i + offset|0] = low|0;
+        low = ((code|0)>>>0) & 0xff;
+        buf[i + offset|0] = (low|0)>>>0;
         if ((low|0)==0) {
-            buf[i + ++offset] = currHigh|0;
+            buf[i + ++offset] = (currHigh|0)>>>0;
         }
     }
-    return length + offset - start|0;
+    return (length + offset - start|0)>>>0;
 };
 
 // Unpack a typedarray to a new string, offset and length are required
@@ -291,45 +296,92 @@ UTFzap.prototype.pack = function (str, length, buf, offset) {
 // It prevents it from creating/destroying too much space in memory and avoid availability usage from the JS garbage collector
 UTFzap.prototype.unpack = function(buf, length, offset) {
 
+    // Coerce numbers to entire integer
     length = length | 0;
     offset = offset | 0;
-    var end = offset + length|0, currHighCode = 0, currHigh = 0, codes_index = 0, curr = 0, next = 0, i = 0;
 
-    if ((length|0) == 0) {
-        return "";
-    } else if ((length|0) == 1) {
-        return this.fcc(buf[offset|0]);
-    } else if ((length|0) == 2) {
-        var a = buf[offset++]|0;
-        if ((a|0) == 0) {
-            return "\0";
+    // Init temporary variable onc in the beginning of the function
+    var end = offset + length|0, currHighCode = 0, currHigh = 0, codes_index = 0, curr = 0, next = 0, i = 0, next_zero_code = 0, next_same_high_code = 0, next_serie_change_something = 0;
+
+    // Those functions perform a bit better we gain 10% speed
+    function get_buf_i(buf, i) {return (buf[i|0] | 0) >>> 0;}
+    function plus_uint_one(a) {return (a + 1 | 0) >>> 0;}
+    function plus_uint_two(a) {return (a + 2 | 0) >>> 0;}
+    function plus_uint_three(a) {return (a + 3 | 0) >>> 0;}
+    function plus_uint(a, b) {return (a + b | 0) >>> 0;}
+    function uint_less(a, b) {return ((a | 0) >>> 0) < ((b | 0) >>> 0);}
+    function uint_not_zero(n) {return ((n|0) >>> 0) != 0;}
+    function uint_equal(a, b) {return ((a|0) >>> 0) == ((b|0) >>> 0);}
+
+    // short string cases
+    if ((length|0) < 3) {
+
+        switch (length|0) {
+            case 2:
+                var a = buf[offset++]|0;
+                if ((a|0) == 0) {
+                    return "\0";
+                }
+                return this.fcc(a|0, buf[offset|0]|0);
+            case 1:
+                return this.fcc(buf[offset|0]);
+            case 0:
+                return "";
         }
-        return this.fcc(a|0, buf[offset|0]|0);
-    } else if ((length|0) < (this.cold_functions_length_-1|0)) {
+
+    }else if ((length|0) < (this.cold_functions_length_-1|0)) {
+        // Cold function that gets optimized since they are a bit more easily understood by the compiler
+        // We have created those function earlier...
         return this.use_cold_function(length|0, buf, length|0, offset|0);
     }
 
+    // Increase temporary reusable memory if necessary
     if((end-offset|0) > (this.memory_item_length|0)){
         this.set_memory_item_size((end-offset)*1.5|0);
     }
 
-    for (i = offset|0; (i|0) < (end|0); i=(i+1|0)>>>0) {
-        curr = buf[i|0]|0;
-        if ((curr|0)>0) {
-            this.set_memory_item(codes_index|0, curr + currHigh|0);
-            codes_index=codes_index+1|0;
+    for (i = offset|0; uint_less(i|0,end|0);) {
+
+        curr = get_buf_i(buf, i|0);
+        next = get_buf_i(buf, plus_uint_one(i|0));
+
+        // This operation can be simplified in writings but here we can mostly batch read/write by two ops
+        if (uint_not_zero(curr|0)) {
+
+            if(uint_not_zero(next|0)) {
+                this.set_memory_item(codes_index|0, plus_uint(curr|0,currHigh|0));
+                this.set_memory_item(plus_uint_one(codes_index|0), plus_uint(next|0, currHigh|0));
+                codes_index = plus_uint_two(codes_index|0);
+                i = plus_uint_two(i|0);
+            }else {
+
+                if (uint_equal(get_buf_i(buf, plus_uint_two(i|0)), currHighCode|0)) {
+                    this.set_memory_item(codes_index|0, plus_uint(curr|0, currHigh|0));
+                    this.set_memory_item(plus_uint_one(codes_index|0), plus_uint(next|0, currHigh|0));
+                    codes_index = plus_uint_two(codes_index|0);
+                    i = plus_uint_three(i|0);
+                } else {
+                    this.set_memory_item(codes_index|0, plus_uint(curr|0, currHigh|0));
+                    currHighCode = get_buf_i(buf, plus_uint_two(i|0));
+                    currHigh = get_buf_i(buf, plus_uint_two(i|0)) << 8;
+                    codes_index = plus_uint_one(codes_index|0);
+                    i = plus_uint_three(i|0);
+                }
+            }
+
         } else {
-            next = buf[i + 1|0]|0;
-            i = i+1|0;
-            if ((next|0) == (currHighCode|0)) {
-                this.set_memory_item(codes_index|0, curr + currHigh|0);
-                codes_index=codes_index+1|0;
+            if (uint_equal(next|0, currHighCode|0)) {
+                this.set_memory_item(codes_index|0, plus_uint(curr|0, currHigh|0));
+                codes_index = plus_uint_one(codes_index|0);
+                i = plus_uint_two(i|0);
             } else {
                 currHighCode = next|0;
                 currHigh = next << 8;
+                i = plus_uint_two(i|0);
             }
         }
     }
+
     return this.string_from_memory(0, codes_index-1|0);
 };
 
