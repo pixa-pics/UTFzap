@@ -1,7 +1,7 @@
 {
   "name": "utf-zap",
-  "version": "2.2.0",
-  "description": "Lightweight (raw & min: 6.8 kB) hacked UTF-16 compression algorithm that works +(50-75)% faster than UTF-8 yet with a weight of 9+/10 the usual size!",
+  "version": "2.2.1",
+  "description": "UTFzap ⚡ ~6.8 kB Intelligent UTF-16 almost 75% faster and 9% lighter compared to the native UTF-8 browser serializer!",
   "devDependencies": {
     "tinyify": "^4.0.0"
   },
