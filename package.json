@@ -1,6 +1,6 @@
 {
   "name": "utf-zap",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "description": "UTFzap ⚡ ~6.8 kB Intelligent UTF-16 almost 75% faster and 9% lighter compared to the native UTF-8 browser serializer!",
   "devDependencies": {
     "tinyify": "^4.0.0"

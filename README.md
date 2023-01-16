@@ -161,3 +161,8 @@ Check the source code for more info.
 
 Forked from UTFZ-lib
 
+![Branding of uraniumjs and utfzap](https://raw.githubusercontent.com/pixa-pics/UTFzap/main/urazap.png) 
+
+You may be interested in :
+
+https://www.npmjs.com/package/uraniumjs
