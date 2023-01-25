@@ -451,29 +451,33 @@ UTFzap.prototype.unpack = function (buf, length, offset) {
 
 // Simple function to encode a string to a new buffer (Typed Array on 8bts)
 // it has to allocate a new space inside random access memory managed by the garbage collector of JS
-UTFzap.prototype.encode = function ($str) {
-  var $b = new Uint8Array($str.length * 3 + 2);
-  var $l = this.pack($str, $str.length, $b, 2);
-  $b[0] = $l >> 0 & 0xff;
-  $b[1] = $l >> 8 & 0xff;
-  return $b.slice(0, $l + 2);
+UTFzap.prototype.encode = function($str) {
+    var $b = new Uint8Array($str.length*3+2);
+    var $l = this.pack($str, $str.length, $b, 2);
+    $b[0] = ($l >> 0) & 0xff;
+    $b[1] = ($l >> 8) & 0xff;
+    return $b.slice(0, $l+2);
 };
+// Alias
+UTFzap.prototype.toUint8Array = UTFzap.prototype.encode;
 
 // Simple function to encode a TypedArray/Buffer to a new string (yes it encodes a string from a Uint8Array)
 // it has to allocate a new space inside random access memory managed by the garbage collector of JS
-UTFzap.prototype.decode = function ($b) {
-  var $l = 0 | $b[0] << 0 | $b[1] << 8;
-  return this.unpack($b, $l + 2, 2);
-};
-
-// Global exportation for browser
-window.UTFzap = UTFzap;
+UTFzap.prototype.decode = function($b) {
+    var $l = 0 | $b[0] << 0 | $b[1] << 8;
+    return this.unpack($b, $l + 2, 2);
+}
+// Alias
+UTFzap.prototype.fromUint8Array = UTFzap.prototype.decode;
 
 // Once exported to the engine, it beguns generating cold functions when user is inactive or consume a few
 // Of all available computation power, it cache lazily those cold functions for any new instance created later in the JS VM
 UTFzap.lazyComputeColdFunctions();
 
 // Optional exportation for node js
-if (typeof module !== "undefined") {
-  module.exports = UTFzap;
+if(typeof module !== "undefined") {
+    module.exports = UTFzap;
+}else {
+    // Global exportation for browser
+    window.UTFzap = UTFzap;
 }
